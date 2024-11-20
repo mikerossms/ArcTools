@@ -47,7 +47,8 @@ averageCpuUsage=$(awk 'NR>2 {sum+=$13+$14} END {print sum/NR}' vmstat_usage.txt)
 
 # Extract memory usage data
 peakMemoryUsage=$(awk 'NR>2 {print $4}' vmstat_usage.txt | sort -nr | head -1)
-averageMemoryUsage=$(awk 'NR>2 {sum+=$4} END {print sum/NR}' vmstat_usage.txt)
+#averageMemoryUsage=$(awk 'NR>2 {sum+=$4} END {print sum/NR}' vmstat_usage.txt)
+averageMemoryUsage=$(awk 'NR>2 {sum+=$4} END {if (NR>2) print sum/(NR-2); else print 0}' vmstat_usage.txt)
 
 # Extract disk throughput and IOPS data
 peakThroughput=$(awk -v device="$osDevice" '$1 == device {print $6}' iostat_usage.txt | sort -nr | head -1)
