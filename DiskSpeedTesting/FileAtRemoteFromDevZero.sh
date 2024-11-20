@@ -7,7 +7,7 @@ storageLocation="/mnt/azurefiles"
 fileSize=1024
 
 # The OS file device
-osDevice="/sda"
+osDevice="sdb"
 
 # If the storage location does not exist, create it
 if [ ! -d "$storageLocation" ]; then
@@ -63,10 +63,18 @@ echo "File creation time: $elapsedTime seconds"
 echo "Transfer speed: $transferSpeed"
 echo "Peak CPU usage: $peakCpuUsage%"
 echo "Average CPU usage: $averageCpuUsage%"
-echo "Peak memory usage: $peakMemoryUsage kB"
-echo "Average memory usage: $averageMemoryUsage kB"
-echo "Peak disk throughput: $peakThroughput kB/s"
-echo "Average disk throughput: $averageThroughput kB/s"
+peakMemoryUsageMB=$(echo "scale=2; $peakMemoryUsage / 1024" | bc)
+averageMemoryUsageMB=$(echo "scale=2; $averageMemoryUsage / 1024" | bc)
+peakThroughputMB=$(echo "scale=2; $peakThroughput / 1024" | bc)
+averageThroughputMB=$(echo "scale=2; $averageThroughput / 1024" | bc)
+
+echo "Peak memory usage: $peakMemoryUsageMB MB"
+echo "Average memory usage: $averageMemoryUsageMB MB"
+echo "Peak disk throughput: $peakThroughputMB MB/s"
+echo "Average disk throughput: $averageThroughputMB MB/s"
 echo "Peak IOPS: $peakIOPS"
 echo "Average IOPS: $averageIOPS"
 echo "Local disk usage: $localDiskImpact"
+
+# Remove the temporary files
+rm vmstat_usage.txt iostat_usage.txt dd_output.txt
