@@ -1,0 +1,20 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "firewallPolicies_AVD_DefaultPolicy_name": {
+            "value": "boundary"
+        },
+        "location": {
+            "value": "uksouth"
+        },
+        "firewall-policy-tier": {
+            "value": "standard"
+        },
+        "avd-hostpool-subnet": {
+            "value": "*"
+        }
+    }
+}
+
+
