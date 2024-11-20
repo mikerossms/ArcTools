@@ -78,6 +78,7 @@ done
 # Calculate overall average throughput speed
 if [ $file_count -gt 0 ]; then
     average_speed=$(echo "scale=2; $total_size / $total_time / 1024 / 1024" | bc)
+    echo .
     echo "Average Speed: $average_speed MB/s"
     echo "Total Transfer Time: $total_time seconds"
     echo "Highest Peak CPU Usage: $highest_peak_cpu %"
