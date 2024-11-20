@@ -24,6 +24,12 @@ highest_peak_cpu=0
 for file in "$folderLocation"/*; do
     if [ -f "$file" ]; then
         file_size=$(stat -c%s "$file")
+        file_size_mib=$(echo "scale=2; $file_size / 1024 / 1024" | bc)
+        file_size_gib=$(echo "scale=2; $file_size / 1024 / 1024 / 1024" | bc)
+        echo "Transferring file: $(basename "$file")"
+        echo "Path: $file"
+        echo "Size: $file_size_gib GiB ($file_size_mib MiB)"
+        
         start_time=$(date +%s.%N)
         
         # Start vmstat in background to capture CPU and memory usage
@@ -64,6 +70,8 @@ for file in "$folderLocation"/*; do
         total_size=$(echo "$total_size + $file_size" | bc)
         total_time=$(echo "$total_time + $end_time - $start_time" | bc)
         file_count=$((file_count + 1))
+
+        rm vmstat_output.txt
     fi
 done
 
