@@ -18,8 +18,8 @@ echo "File size: $fileSize MiB ($(echo "scale=2; $fileSize / 1024" | bc) GiB)"
 startTime=$(date +%s)
 
 # Start monitoring CPU and memory usage in the background
-top -b -d 1 > /tmp/top_usage.txt &
-top_pid=$!
+vmstat 1 > vmstat_usage.txt &
+vmstat_pid=$!
 
 # Create a random file of size fileSize at the storageLocation
 dd if=/dev/zero of=$storageLocation/testfile bs=1M count=$fileSize
@@ -27,8 +27,8 @@ dd if=/dev/zero of=$storageLocation/testfile bs=1M count=$fileSize
 # End time
 endTime=$(date +%s)
 
-# Kill the background top process
-kill $top_pid
+# Kill the background vmstat process
+kill $vmstat_pid
 
 # Calculate the time taken
 timeTaken=$((endTime - startTime))
@@ -37,12 +37,12 @@ timeTaken=$((endTime - startTime))
 diskSpeed=$(echo "$fileSize / $timeTaken" | bc -l)
 
 # Extract CPU usage data
-peakCpuUsage=$(grep '%Cpu(s)' top_usage.txt | awk '{print $2}' | sort -nr | head -1)
-averageCpuUsage=$(grep '%Cpu(s)' top_usage.txt | awk '{print $2}' | awk '{sum+=$1} END {print sum/NR}')
+peakCpuUsage=$(awk 'NR>2 {print $13+$14}' vmstat_usage.txt | sort -nr | head -1)
+averageCpuUsage=$(awk 'NR>2 {sum+=$13+$14} END {print sum/NR}' vmstat_usage.txt)
 
 # Extract memory usage data
-peakMemoryUsage=$(grep 'KiB Mem' top_usage.txt | awk '{print $6}' | sort -nr | head -1)
-averageMemoryUsage=$(grep 'KiB Mem' top_usage.txt | awk '{print $6}' | awk '{sum+=$1} END {print sum/NR}')
+peakMemoryUsage=$(awk 'NR>2 {print $4}' vmstat_usage.txt | sort -nr | head -1)
+averageMemoryUsage=$(awk 'NR>2 {sum+=$4} END {print sum/NR}' vmstat_usage.txt)
 
 
 
@@ -55,5 +55,5 @@ echo "Average memory usage: $averageMemoryUsage KiB"
 echo "Peak memory usage: $peakMemoryUsage KiB"
 
 # Clean up
-rm /tmp/top_output.txt
+rm vmstat_usage.txt
 
