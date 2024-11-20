@@ -44,15 +44,17 @@ averageCpuUsage=$(awk 'NR>2 {sum+=$13+$14} END {print sum/NR}' vmstat_usage.txt)
 peakMemoryUsage=$(awk 'NR>2 {print $4}' vmstat_usage.txt | sort -nr | head -1)
 averageMemoryUsage=$(awk 'NR>2 {sum+=$4} END {print sum/NR}' vmstat_usage.txt)
 
-
+# Convert memory usage from KiB to MiB
+peakMemoryUsageMiB=$(echo "scale=2; $peakMemoryUsage / 1024" | bc)
+averageMemoryUsageMiB=$(echo "scale=2; $averageMemoryUsage / 1024" | bc)
 
 # Log the time taken, disk speed, and CPU/memory usage
 echo "Time taken: $timeTaken seconds"
 echo "Disk speed: $diskSpeed MB/s"
 echo "Average CPU usage: $averageCpuUsage%"
 echo "Peak CPU usage: $peakCpuUsage%"
-echo "Average memory usage: $averageMemoryUsage KiB"
-echo "Peak memory usage: $peakMemoryUsage KiB"
+echo "Average memory usage: $averageMemoryUsageMiB MiB"
+echo "Peak memory usage: $peakMemoryUsageMiB MiB"
 
 # Clean up
 rm vmstat_usage.txt

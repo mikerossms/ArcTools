@@ -18,6 +18,7 @@ calculate_speed() {
 total_size=0
 total_time=0
 file_count=0
+highest_peak_cpu=0
 
 # Copy files and calculate transfer speed
 for file in "$folderLocation"/*; do
@@ -25,15 +26,15 @@ for file in "$folderLocation"/*; do
         file_size=$(stat -c%s "$file")
         start_time=$(date +%s.%N)
         
-        # Start top in batch mode to capture CPU and memory usage
-        top -b -d 1 -n 2 -p $$ > top_output.txt &
-        top_pid=$!
+        # Start vmstat in background to capture CPU and memory usage
+        vmstat 1 > vmstat_output.txt &
+        vmstat_pid=$!
         
         # Copy the file
         cp "$file" "$folderDestination"
         
-        # Stop top
-        kill $top_pid
+        # Stop vmstat
+        kill $vmstat_pid
         
         end_time=$(date +%s.%N)
         
@@ -41,17 +42,24 @@ for file in "$folderLocation"/*; do
         file_size_mib=$(echo "scale=2; $file_size / 1024 / 1024" | bc)
         file_size_gib=$(echo "scale=2; $file_size / 1024 / 1024 / 1024" | bc)
         
-        # Extract CPU and memory usage from top_output.txt
-        peak_memory=$(grep "KiB Mem" top_output.txt | tail -1 | awk '{print $6}')
-        average_memory=$(grep "KiB Mem" top_output.txt | tail -1 | awk '{print $8}')
-        peak_cpu=$(grep "Cpu(s)" top_output.txt | tail -1 | awk '{print $2}')
-        average_cpu=$(grep "Cpu(s)" top_output.txt | tail -1 | awk '{print $2}')
+        # Extract CPU and memory usage from vmstat_output.txt
+        peak_memory=$(awk 'NR>2 {print $4}' vmstat_output.txt | sort -n | tail -1)
+        average_memory=$(awk 'NR>2 {sum+=$4} END {print sum/NR}' vmstat_output.txt)
+        peak_cpu=$(awk 'NR>2 {print $13+$14}' vmstat_output.txt | sort -n | tail -1)
+        average_cpu=$(awk 'NR>2 {sum+=$13+$14} END {print sum/NR}' vmstat_output.txt)
         
         echo "File: $(basename "$file") - Size: $file_size_gib GiB ($file_size_mib MiB) - Speed: $speed MB/s"
-        echo "Peak Memory Usage: $peak_memory KB"
-        echo "Average Memory Usage: $average_memory KB"
+        peak_memory_mb=$(echo "scale=2; $peak_memory / 1024" | bc)
+        average_memory_mb=$(echo "scale=2; $average_memory / 1024" | bc)
+        echo "Peak Memory Usage: $peak_memory_mb MB"
+        echo "Average Memory Usage: $average_memory_mb MB"
         echo "Peak CPU Usage: $peak_cpu %"
         echo "Average CPU Usage: $average_cpu %"
+        
+        # Update highest peak CPU usage
+        if (( $(echo "$peak_cpu > $highest_peak_cpu" | bc -l) )); then
+            highest_peak_cpu=$peak_cpu
+        fi
         
         total_size=$(echo "$total_size + $file_size" | bc)
         total_time=$(echo "$total_time + $end_time - $start_time" | bc)
@@ -64,6 +72,7 @@ if [ $file_count -gt 0 ]; then
     average_speed=$(echo "scale=2; $total_size / $total_time / 1024 / 1024" | bc)
     echo "Average Speed: $average_speed MB/s"
     echo "Total Transfer Time: $total_time seconds"
+    echo "Highest Peak CPU Usage: $highest_peak_cpu %"
 else
     echo "No files to transfer."
 fi
